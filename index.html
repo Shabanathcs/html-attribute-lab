@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML Attribute Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one lab bench — sticky tab bar, then a single working column; missions split into editor | live preview */
+:root{
+  --paper:#F4F7FB; --card:#FFFFFF; --ink:#18213D; --muted:#5A6482; --line:#DCE3EE;
+  --tomato:#FF6347; --tomato-soft:#FFE6E1; --red:#FF0000;
+  --ok:#0E8A6A; --ok-soft:#DDF5EC; --bad:#C62828; --bad-soft:#FDE4E4;
+  --sun:#F5B700; --silver:#9AA4B8; --bronze:#C27A3A;
+  --code-bg:#1A2140; --code-fg:#E8ECF8; --c-tag:#7FD3FF; --c-attr:#FFC66D; --c-val:#9BE58C; --c-txt:#E8ECF8;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ink)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--ink);color:#fff;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+header.top .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:10px}
+.brand{font-family:var(--display);font-weight:800;font-size:1.35rem;line-height:1;display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand code{font-family:var(--mono);font-size:.8rem;background:var(--tomato);color:#fff;padding:4px 8px;border-radius:6px}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs button{font:700 .95rem var(--body);border:2px solid transparent;background:transparent;color:#C9D2EA;padding:6px 12px;border-radius:999px;cursor:pointer}
+nav.tabs button .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#2B355C;color:#fff;font-size:.8rem;margin-right:6px}
+nav.tabs button[aria-selected="true"]{background:#fff;color:var(--ink)}
+nav.tabs button[aria-selected="true"] .n{background:var(--tomato)}
+nav.tabs button:focus-visible,button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+main{padding-block:28px 60px}
+section.panel{display:grid;gap:22px}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1.title{font-size:clamp(1.9rem,4vw,2.7rem);font-weight:800}
+h2{font-size:1.5rem;font-weight:800}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+.lead{color:var(--muted);max-width:64ch}
+.eyebrow{font:800 .78rem var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--tomato)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;gap:14px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.btn{font:800 1rem var(--body);border:0;border-radius:10px;padding:11px 18px;cursor:pointer;background:var(--ink);color:#fff;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn.tomato{background:var(--tomato)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn.ok{background:var(--ok)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.mono{font-family:var(--mono)}
+code.inline{font-family:var(--mono);font-size:.9em;background:var(--tomato-soft);color:#A3301C;padding:1px 6px;border-radius:5px;white-space:nowrap}
+
+/* code line used in anatomy + spot game */
+.codeline{background:var(--code-bg);color:var(--code-fg);font-family:var(--mono);font-size:clamp(1rem,2.6vw,1.6rem);border-radius:12px;padding:22px 18px;overflow-x:auto;white-space:nowrap}
+.tok{display:inline-block;border-radius:6px;padding:2px 1px;transition:background .15s,box-shadow .15s}
+.tok.tag{color:var(--c-tag)} .tok.attr{color:var(--c-attr)} .tok.val{color:var(--c-val)} .tok.txt{color:var(--c-txt)}
+.tok.hit{background:rgba(255,255,255,.14);box-shadow:0 0 0 2px var(--sun)}
+.spot .tok.pick{cursor:pointer}
+.spot .tok.pick:hover{background:rgba(255,255,255,.1)}
+.tok.right{background:rgba(14,138,106,.55)!important;box-shadow:none}
+.tok.wrong{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:700 .9rem var(--body);border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ink)}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff}
+.chip .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+.prompt{font-family:var(--display);font-size:1.3rem;font-weight:700}
+.progress-dots{display:flex;gap:6px}
+.progress-dots i{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.progress-dots i.done{background:var(--ok)}
+
+.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.stage{border:2px dashed var(--line);border-radius:12px;padding:16px;background:#fff;min-height:96px;display:grid;align-content:center}
+.stage h1{font-family:var(--body);font-size:1.6rem;margin:0}
+.reveal{font-family:var(--mono);font-size:.9rem;background:var(--code-bg);color:var(--code-fg);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:nowrap}
+
+.def{display:grid;gap:8px}
+.def dt{font-family:var(--display);font-weight:800;font-size:1.15rem}
+.def dd{margin:0;color:var(--muted)}
+.formula{font-family:var(--mono);font-size:1rem;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:nowrap}
+.try{display:grid;gap:10px}
+.try .stage p{margin:0;font-size:1.15rem;padding:8px 10px;border-radius:6px}
+
+/* missions */
+.start{max-width:560px}
+label{font-weight:800;font-size:.95rem}
+input,select{font:600 1rem var(--body);padding:10px 12px;border:2px solid var(--line);border-radius:10px;width:100%;background:#fff;color:var(--ink)}
+.field{display:grid;gap:6px}
+.msg{font-weight:700;border-radius:10px;padding:10px 14px}
+.msg:empty{display:none}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.msg.bad{background:var(--bad-soft);color:var(--bad)}
+.msg.info{background:#EAF0FA;color:var(--ink)}
+.mhead{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps span{font:800 .85rem var(--body);padding:4px 10px;border-radius:999px;background:#fff;border:2px solid var(--line);color:var(--muted)}
+.steps span.now{border-color:var(--tomato);color:var(--tomato)}
+.steps span.done{background:var(--ok);border-color:var(--ok);color:#fff}
+.scorebox{font:800 1rem var(--body);background:var(--ink);color:#fff;border-radius:10px;padding:8px 14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tasklist{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.bench{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px}
+@media (max-width:820px){.bench{grid-template-columns:minmax(0,1fr)}}
+.pane{border-radius:12px;overflow:hidden;border:1px solid var(--line);display:grid;grid-template-rows:auto 1fr;min-width:0}
+.pane .bar{font:800 .8rem var(--body);letter-spacing:.08em;text-transform:uppercase;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pane.editor .bar{background:#10162E;color:#AEB8D6}
+.pane.preview .bar{background:#E9EEF6;color:var(--muted)}
+.dots{display:flex;gap:5px}.dots i{width:10px;height:10px;border-radius:50%;background:#FF6B6B}.dots i:nth-child(2){background:#FFC93C}.dots i:nth-child(3){background:#2EC4B6}
+textarea.code{display:block;width:100%;min-height:250px;resize:vertical;border:0;margin:0;background:var(--code-bg);color:var(--code-fg);font:500 15px/1.7 var(--mono);padding:14px;tab-size:2;white-space:pre;overflow:auto;caret-color:var(--tomato)}
+.out{background:#fff;padding:16px;min-height:250px;overflow:auto;color:#222}
+.hint{background:#FFF7DB;border:1px solid #F1DE9B;border-radius:10px;padding:10px 14px;font-size:.95rem}
+.hint{display:grid;gap:8px;user-select:none;-webkit-user-select:none}
+.hint img{display:block;max-width:100%;height:auto;pointer-events:none;-webkit-user-drag:none;user-select:none}
+.result{text-align:center;justify-items:center}
+.medal{width:132px;height:132px;border-radius:50%;display:grid;place-items:center;font:800 1.3rem var(--display);color:#fff;box-shadow:inset 0 -8px 0 rgba(0,0,0,.15)}
+.medal.Gold{background:var(--sun);color:#3B2B00}.medal.Silver{background:var(--silver)}.medal.Bronze{background:var(--bronze)}
+table.marks{border-collapse:collapse;width:100%;max-width:520px;font-variant-numeric:tabular-nums}
+table.marks td,table.marks th{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left}
+table.marks td:last-child,table.marks th:last-child{text-align:right}
+.exitq{display:grid;gap:10px}
+.opts{display:grid;gap:8px}
+.opt{font:700 1rem var(--body);text-align:left;border:2px solid var(--line);background:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;color:var(--ink)}
+.opt code{font-family:var(--mono)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.foot{color:var(--muted);font-size:.85rem;text-align:center;padding-block:10px 24px}
+.idrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.jump{justify-content:space-between}
+.steps button{font:800 .85rem var(--body);padding:5px 12px;border-radius:999px;background:#fff;border:2px solid var(--line);color:var(--muted);cursor:pointer}
+.steps button:hover{border-color:var(--tomato);color:var(--tomato)}
+.steps button.done{background:var(--ok);border-color:var(--ok);color:#fff}
+.mission{scroll-margin-top:84px}
+.mission.complete{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok-soft)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">HTML Attribute Lab <code>style=""</code></div>
+    <nav class="tabs" role="tablist" aria-label="Lesson sections">
+      <button role="tab" id="tab-warm" aria-selected="true" data-p="warm"><span class="n">1</span>Warm-up</button>
+      <button role="tab" id="tab-learn" aria-selected="false" data-p="learn"><span class="n">2</span>Learn</button>
+      <button role="tab" id="tab-code" aria-selected="false" data-p="code"><span class="n">3</span>Code Missions</button>
+      <button role="tab" id="tab-exit" aria-selected="false" data-p="exit"><span class="n">4</span>Exit Ticket</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ============ 1 WARM-UP ============ -->
+<section class="panel" id="p-warm">
+  <div class="def">
+    <span class="eyebrow">Grade 6 · Building Web Pages using HTML5 and CSS3</span>
+    <h1 class="title">Same tag, new look</h1>
+    <p class="lead">Both boxes use the same <code class="inline">&lt;h1&gt;</code> tag and the same words. Only one small thing is different. Can you guess what it is?</p>
+  </div>
+  <div class="compare">
+    <div class="card"><span class="eyebrow" style="color:var(--muted)">Box A</span><div class="stage"><h1>Hello UAE!</h1></div></div>
+    <div class="card"><span class="eyebrow" style="color:var(--muted)">Box B</span><div class="stage"><h1 style="color:Tomato;">Hello UAE!</h1></div></div>
+  </div>
+  <div class="row"><button class="btn ghost" id="revealBtn">Show me the code</button></div>
+  <div id="revealBox" hidden class="grid2">
+    <div class="reveal"><span style="color:var(--c-tag)">&lt;h1&gt;</span>Hello UAE!<span style="color:var(--c-tag)">&lt;/h1&gt;</span></div>
+    <div class="reveal"><span style="color:var(--c-tag)">&lt;h1 </span><span style="color:var(--c-attr)">style</span>=<span style="color:var(--c-val)">"color:Tomato;"</span><span style="color:var(--c-tag)">&gt;</span>Hello UAE!<span style="color:var(--c-tag)">&lt;/h1&gt;</span></div>
+  </div>
+
+  <div class="card spot">
+    <div class="mhead">
+      <div class="def"><span class="eyebrow">Quick game</span><h2>Spot the Part</h2></div>
+      <div class="progress-dots" id="spotDots" aria-label="Progress"></div>
+    </div>
+    <p class="prompt" id="spotPrompt">Tap the element name.</p>
+    <div class="codeline" id="spotLine" aria-live="off"></div>
+    <div class="msg" id="spotMsg" aria-live="polite"></div>
+    <div class="row"><button class="btn ghost" id="spotReset">Play again</button></div>
+  </div>
+</section>
+
+<!-- ============ 2 LEARN ============ -->
+<section class="panel" id="p-learn" hidden>
+  <div class="def">
+    <span class="eyebrow">Elements and attributes</span>
+    <h1 class="title">Parts of an HTML element</h1>
+    <p class="lead">Tap a part name to light it up in the code.</p>
+  </div>
+  <div class="card">
+    <div class="legend" id="anaChips"></div>
+    <div class="codeline" id="anaLine"></div>
+    <p id="anaText" class="lead" style="color:var(--ink)">An <b>element</b> is the start tag, the content and the end tag together.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card def">
+      <dt>Element</dt>
+      <dd>Start tag + content + end tag. It tells the browser <b>what</b> something is: a heading, a paragraph, a line break.</dd>
+      <div class="formula"><span style="color:#2B6CB0">&lt;p&gt;</span>Hello<span style="color:#2B6CB0">&lt;/p&gt;</span></div>
+    </div>
+    <div class="card def">
+      <dt>Attribute</dt>
+      <dd>Extra information about the element. It is written <b>inside the start tag</b> as <b>name="value"</b>.</dd>
+      <div class="formula"><span style="color:#2B6CB0">&lt;p </span><span style="color:#B7791F">name</span>=<span style="color:#2F855A">"value"</span><span style="color:#2B6CB0">&gt;</span></div>
+    </div>
+    <div class="card def">
+      <dt>The style attribute</dt>
+      <dd>Changes how an element looks. Inside the quotes we write <b>property:value;</b> with a colon and a semicolon.</dd>
+      <div class="formula">style="<span style="color:#B7791F">property</span>:<span style="color:#2F855A">value</span>;"</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card try">
+      <span class="eyebrow">Practice tag 1 · text colour</span>
+      <h3>style="color:Tomato;"</h3>
+      <p class="lead">Changes the colour of the <b>text</b>. Try other colour names.</p>
+      <div class="legend" id="colorChips"></div>
+      <div class="formula" id="colorCode"></div>
+      <div class="stage"><p id="colorDemo">Sharjah Indian School</p></div>
+    </div>
+    <div class="card try">
+      <span class="eyebrow">Practice tag 2 · background colour</span>
+      <h3>style="background-color:red;"</h3>
+      <p class="lead">Changes the colour <b>behind</b> the text. Try other colour names.</p>
+      <div class="legend" id="bgChips"></div>
+      <div class="formula" id="bgCode"></div>
+      <div class="stage"><p id="bgDemo">Fire drill at 10:00 am</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Remember the 4 golden rules</h3>
+    <ol class="tasklist">
+      <li>Write the attribute inside the <b>start tag</b>, never in the end tag.</li>
+      <li>Put the value inside <b>double quotes</b>: <code class="inline">style="..."</code></li>
+      <li>Use a <b>colon</b> between property and value: <code class="inline">color:Tomato</code></li>
+      <li>Spell it the American way: <code class="inline">color</code>, not colour. Use a hyphen in <code class="inline">background-color</code>.</li>
+    </ol>
+    <p class="lead">Two properties in one tag? Separate them with a semicolon: <code class="inline">style="color:white; background-color:red;"</code></p>
+  </div>
+</section>
+
+<!-- ============ 3 CODE MISSIONS ============ -->
+<section class="panel" id="p-code" hidden>
+  <div id="startCard" class="card">
+    <span class="eyebrow">Code Missions</span>
+    <h1 class="title">Be a web stylist</h1>
+    <p class="lead">Write real HTML code in each editor. The preview changes as you type. Press <b>Check my code</b> when you are ready. Each mission gives 100 points on the first try and 25 points less for every wrong check.</p>
+    <div class="idrow">
+      <div class="field"><label for="sname">Your full name</label><input id="sname" maxlength="40" placeholder="Type your name" autocomplete="off"></div>
+      <div class="field"><label for="scls">Class</label><select id="scls"><option value="">Select</option></select></div>
+    </div>
+    <div class="row jump">
+      <div class="steps" id="mSteps"></div>
+      <div class="scorebox" id="mScore">0 / 300 pts</div>
+    </div>
+  </div>
+
+  <div id="missionList" class="panel"></div>
+
+  <div id="resultCard" hidden class="card result">
+    <span class="eyebrow">Missions complete</span>
+    <div class="medal" id="medal">Gold</div>
+    <h2 id="rTitle"></h2>
+    <table class="marks"><thead><tr><th>Mission</th><th>Points</th></tr></thead><tbody id="rBody"></tbody></table>
+    <div class="msg info" id="saveMsg"></div>
+    <div class="row"><button class="btn ghost" id="retrySave" hidden>Try saving again</button><button class="btn" id="freeBtn">Free play: design your own card</button></div>
+  </div>
+
+  <article id="freeBlock" hidden class="card mission">
+    <div class="def"><span class="eyebrow">Free play</span><h2>Design your own card</h2></div>
+    <p>Change any text and try other colour names like gold, navy, green or pink. Use <code class="inline">color</code> and <code class="inline">background-color</code> on at least three elements.</p>
+    <div class="bench">
+      <div class="pane editor">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>my-card.html</span></div>
+        <textarea class="code" id="edFree" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Free play code editor"></textarea>
+      </div>
+      <div class="pane preview"><div class="bar"><span>Browser preview</span><span>live</span></div><div class="out" id="outFree"></div></div>
+    </div>
+  </article>
+</section>
+
+<!-- ============ 4 EXIT TICKET ============ -->
+<section class="panel" id="p-exit" hidden>
+  <div class="def">
+    <span class="eyebrow">Plenary</span>
+    <h1 class="title">Exit Ticket</h1>
+    <p class="lead">Answer the three questions. Then discuss your answers with your partner.</p>
+  </div>
+  <div id="exitBox" class="grid2"></div>
+  <div class="msg" id="exitMsg"></div>
+</section>
+</main>
+<p class="foot">Teacher-designed for Grade 6 Computer Science · Sharjah Indian School, Juwaiza</p>
+
+<script>
+/* Paste the Google Apps Script web-app URL here to record scores in your Google Sheet (leave '' to switch saving off). */
+const SCORE_URL = '';
+const CLASSES = 'ABCDEFGHIJKLMNOPQ'.split('').map(l => 'VI ' + l);
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.p)));
+function showTab(p){
+  document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.p === p)));
+  ['warm','learn','code','exit'].forEach(k => $('p-' + k).hidden = k !== p);
+  window.scrollTo({top:0});
+  try{ localStorage.setItem('attrlab-tab', p); }catch(e){}
+}
+try{ const t = localStorage.getItem('attrlab-tab'); if (t && $('p-' + t)) showTab(t); }catch(e){}
+
+$('revealBtn').onclick = () => { const r = $('revealBox'); r.hidden = !r.hidden; $('revealBtn').textContent = r.hidden ? 'Show me the code' : 'Hide the code'; };
+
+/* ---------- shared token line ---------- */
+const TOKENS = [
+  {t:'<', c:'tag', part:'start'},
+  {t:'h1', c:'tag', part:'start name'},
+  {t:' ', c:'tag', part:'start'},
+  {t:'style', c:'attr', part:'start attr aname'},
+  {t:'=', c:'attr', part:'start attr'},
+  {t:'"color:Tomato;"', c:'val', part:'start attr avalue'},
+  {t:'>', c:'tag', part:'start'},
+  {t:'Hello UAE!', c:'txt', part:'content'},
+  {t:'</h1>', c:'tag', part:'end'}
+];
+function drawLine(el, pickable){
+  el.innerHTML = TOKENS.map((k,i) => `<span class="tok ${k.c}${pickable && k.t.trim() && k.t!=='<' && k.t!=='>' && k.t!=='=' ? ' pick' : ''}" data-i="${i}" data-part="${k.part}">${esc(k.t).replace(/ /g,'&nbsp;')}</span>`).join('');
+}
+
+/* ---------- Spot the Part ---------- */
+const SPOT = [
+  {q:'Tap the element name.', ans:'name', why:'h1 is the element name. It tells the browser this is a main heading.'},
+  {q:'Tap the attribute name.', ans:'aname', why:'style is the attribute. It sits inside the start tag.'},
+  {q:'Tap the attribute value.', ans:'avalue', why:'"color:Tomato;" is the value, written inside double quotes.'},
+  {q:'Tap the content the user will see.', ans:'content', why:'Hello UAE! is the content between the start tag and the end tag.'},
+  {q:'Tap the end tag.', ans:'end', why:'</h1> is the end tag. Attributes never go here.'}
+];
+let spotI = 0;
+function spotInit(){
+  spotI = 0; drawLine($('spotLine'), true); $('spotMsg').className='msg'; $('spotMsg').textContent='';
+  $('spotDots').innerHTML = SPOT.map(() => '<i></i>').join(''); $('spotPrompt').textContent = SPOT[0].q;
+}
+$('spotLine').addEventListener('click', e => {
+  const tok = e.target.closest('.tok.pick'); if (!tok || spotI >= SPOT.length) return;
+  const s = SPOT[spotI];
+  if (tok.dataset.part.split(' ').includes(s.ans)){
+    $('spotLine').querySelectorAll('.tok').forEach(t => { if (t.dataset.part.split(' ').includes(s.ans)) t.classList.add('right'); });
+    $('spotMsg').className='msg ok'; $('spotMsg').textContent = 'Correct! ' + s.why;
+    $('spotDots').children[spotI].classList.add('done');
+    spotI++;
+    setTimeout(() => {
+      $('spotLine').querySelectorAll('.tok').forEach(t => t.classList.remove('right'));
+      if (spotI < SPOT.length) $('spotPrompt').textContent = SPOT[spotI].q;
+      else { $('spotPrompt').textContent = 'All 5 parts spotted. Well done!'; }
+    }, 1300);
+  } else {
+    tok.classList.remove('wrong'); void tok.offsetWidth; tok.classList.add('wrong');
+    $('spotMsg').className='msg bad'; $('spotMsg').textContent = 'Not that one. Look again.';
+  }
+});
+$('spotReset').onclick = spotInit;
+spotInit();
+
+/* ---------- Anatomy ---------- */
+const ANA = [
+  {k:'element', label:'Element', parts:['start','content','end'], text:'An <b>element</b> is the start tag, the content and the end tag together.'},
+  {k:'start', label:'Start tag', parts:['start'], text:'The <b>start tag</b> opens the element. Attributes always live here.'},
+  {k:'name', label:'Element name', parts:['name'], text:'<b>h1</b> is the element name. It decides what the element is.'},
+  {k:'aname', label:'Attribute name', parts:['aname'], text:'<b>style</b> is the attribute name. It gives extra information about the element.'},
+  {k:'avalue', label:'Attribute value', parts:['avalue'], text:'<b>"color:Tomato;"</b> is the attribute value, always inside double quotes.'},
+  {k:'content', label:'Content', parts:['content'], text:'<b>Hello UAE!</b> is the content. This is what you see on the web page.'},
+  {k:'end', label:'End tag', parts:['end'], text:'<b>&lt;/h1&gt;</b> is the end tag. It closes the element and has a slash.'}
+];
+drawLine($('anaLine'), false);
+$('anaChips').innerHTML = ANA.map((a,i) => `<button class="chip" aria-pressed="${i===0}" data-k="${a.k}">${a.label}</button>`).join('');
+function ana(k){
+  const a = ANA.find(x => x.k === k);
+  $('anaChips').querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.k === k)));
+  $('anaLine').querySelectorAll('.tok').forEach(t => t.classList.toggle('hit', t.dataset.part.split(' ').some(p => a.parts.includes(p))));
+  $('anaText').innerHTML = a.text;
+}
+$('anaChips').addEventListener('click', e => { const c = e.target.closest('.chip'); if (c) ana(c.dataset.k); });
+ana('element');
+
+/* ---------- colour try-its ---------- */
+function tryIt(chipsId, codeId, demoId, prop, list, first){
+  $(chipsId).innerHTML = list.map(c => `<button class="chip" aria-pressed="${c===first}" data-c="${c}"><span class="sw" style="background:${c}"></span>${c}</button>`).join('');
+  const set = c => {
+    $(chipsId).querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === c)));
+    $(demoId).setAttribute('style', `${prop}:${c};`);
+    const text = $(demoId).textContent;
+    $(codeId).innerHTML = `<span style="color:#2B6CB0">&lt;p </span><span style="color:#B7791F">style</span>=<span style="color:#2F855A">"${prop}:${c};"</span><span style="color:#2B6CB0">&gt;</span>${text}<span style="color:#2B6CB0">&lt;/p&gt;</span>`;
+  };
+  $(chipsId).addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) set(b.dataset.c); });
+  set(first);
+}
+tryIt('colorChips','colorCode','colorDemo','color',['Tomato','blue','green','purple','orange'],'Tomato');
+tryIt('bgChips','bgCode','bgDemo','background-color',['red','yellow','lightgreen','skyblue','pink'],'red');
+
+/* ---------- Code Missions ---------- */
+const TOMATO = 'rgb(255, 99, 71)', RED = 'rgb(255, 0, 0)', WHITE = 'rgb(255, 255, 255)';
+const MISSIONS = [
+  {
+    title:'Tomato Title', story:'The school website needs a bright heading. Make the heading text Tomato.',
+    tasks:['Add the style attribute inside the <code class="inline">&lt;h1&gt;</code> start tag.','Set the text colour to Tomato.'],
+    code:'<h1>Welcome to Sharjah Indian School</h1>\n<p>Educate. Enlighten. Empower.</p>',
+    hint:{say:'Type this inside the start tag, after h1:', code:'<h1 style="color:Tomato;">'},
+    check: s => need(s,'h1','an <h1> heading') || hasStyle(s.h1,'h1') || colorIs(s.h1,'color',TOMATO,'The heading is not Tomato yet. Use style="color:Tomato;"')
+  },
+  {
+    title:'Red Alert Box', story:'Make the fire drill notice stand out with a red background.',
+    tasks:['Add the style attribute to the <code class="inline">&lt;p&gt;</code> start tag.','Set the background colour to red.'],
+    code:'<h2>Notice Board</h2>\n<p>Fire drill today at 10:00 am. Walk, do not run!</p>',
+    hint:{say:'Use a hyphen in background-color:', code:'<p style="background-color:red;">'},
+    check: s => need(s,'p','a <p> paragraph') || hasStyle(s.p,'p') || colorIs(s.p,'background-color',RED,'The paragraph background is not red yet. Use style="background-color:red;"')
+  },
+  {
+    title:'Proud of the UAE', story:'Design a National Day card using both of today\'s styles.',
+    tasks:['Make the <code class="inline">&lt;h1&gt;</code> text Tomato.','Give the <code class="inline">&lt;p&gt;</code> a red background.','Give the <code class="inline">&lt;h3&gt;</code> white text AND a red background in one style attribute.'],
+    code:'<h1>Proud of the UAE</h1>\n<p>Our flag has four colours: red, green, white and black.</p>\n<h3>Happy National Day!</h3>',
+    hint:{say:'For two properties, put a semicolon between them:', code:'<h3 style="color:white; background-color:red;">'},
+    check: s => need(s,'h1','an <h1> heading') || need(s,'p','a <p> paragraph') || need(s,'h3','an <h3> heading') ||
+      colorIs(s.h1,'color',TOMATO,'Task 1: the <h1> text is not Tomato yet.') ||
+      colorIs(s.p,'background-color',RED,'Task 2: the <p> background is not red yet.') ||
+      colorIs(s.h3,'color',WHITE,'Task 3: the <h3> text should be white.') ||
+      colorIs(s.h3,'background-color',RED,'Task 3: the <h3> background should be red.')
+  }
+];
+
+/* common mistake detector, run before the visual check */
+function lint(code){
+  const tags = code.match(/<[a-z][a-z0-9]*\b[^>]*>/gi) || [];
+  for (const tg of tags){
+    if (!/\bstyle\b/i.test(tg)) continue;
+    if (/\bstyle\s*=\s*(?!["'])/i.test(tg)) return 'Put the style value inside double quotes, like style="color:Tomato;"';
+    if (/\bstyle\s*["']/i.test(tg) || /\bstyle\s*$/i.test(tg.replace(/>$/,''))) return 'You missed the = sign after style. Write style="..."';
+    const m = tg.match(/\bstyle\s*=\s*(["'])(.*?)(\1|$)/i);
+    const v = m ? m[2] : '';
+    if (/colou?r\s*=/i.test(v)) return 'Inside the quotes, use a colon (:) not an equals sign (=). Example: color:Tomato';
+    if (/colour/i.test(v)) return 'CSS uses the spelling "color", not "colour".';
+    if (/background\s+-?\s*color|backgroundcolor|background_color/i.test(v)) return 'Write background-color as one word with a hyphen.';
+    if (/(^|[;\s])(color|background-color)\s+[a-z]/i.test(v)) return 'Put a colon after the property name, for example background-color:red';
+    if (/(tomato|red|white)\s+(color|background)/i.test(v)) return 'Two properties need a semicolon between them: color:white; background-color:red;';
+  }
+  return '';
+}
+function need(s, tag, name){ return s[tag] ? '' : `I can't find ${name}. Did a tag get deleted? Press Reset code to start again.`; }
+function hasStyle(el, tag){ return el.hasAttribute('style') ? '' : `Add the style attribute inside the <${tag}> start tag.`; }
+function colorIs(el, prop, want, msg){ return getComputedStyle(el).getPropertyValue(prop).trim() === want ? '' : msg; }
+
+const st = { name:'', cls:'', tries:MISSIONS.map(()=>0), pts:MISSIONS.map(()=>0), done:MISSIONS.map(()=>false), t0:0, seconds:0 };
+const MAX = MISSIONS.length * 100;
+CLASSES.forEach(c => { const o = document.createElement('option'); o.value = o.textContent = c; $('scls').appendChild(o); });
+
+/* build all missions on one page */
+$('missionList').innerHTML = MISSIONS.map((M,i) => `
+  <article class="card mission" id="m${i}">
+    <div class="mhead">
+      <div class="def"><span class="eyebrow">Mission ${i+1} of ${MISSIONS.length}</span><h2>${M.title}</h2></div>
+      <div class="scorebox" id="ms${i}">100 pts</div>
+    </div>
+    <p>${M.story}</p>
+    <ol class="tasklist">${M.tasks.map(t => `<li>${t}</li>`).join('')}</ol>
+    <div class="bench">
+      <div class="pane editor">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>mission${i+1}.html · type here</span></div>
+        <textarea class="code" id="ed${i}" data-i="${i}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Mission ${i+1} code editor"></textarea>
+      </div>
+      <div class="pane preview"><div class="bar"><span>Browser preview</span><span>live</span></div><div class="out" id="out${i}"></div></div>
+    </div>
+    <div class="msg" id="mm${i}" aria-live="polite"></div>
+    <div class="hint" id="mh${i}" hidden></div>
+    <div class="row">
+      <button class="btn tomato" data-act="check" data-i="${i}">Check my code</button>
+      <button class="btn ghost" data-act="hint" data-i="${i}">Show a hint</button>
+      <button class="btn ghost" data-act="reset" data-i="${i}">Reset code</button>
+    </div>
+  </article>`).join('');
+
+const PREVIEW_CSS = '<style>:host{all:initial;display:block;font-family:Arial,Helvetica,sans-serif;color:#222;font-size:16px;line-height:1.4} h1,h2,h3,p{margin:0 0 12px;padding:4px 6px}</style>';
+const shadows = MISSIONS.map((M,i) => $('out'+i).attachShadow({mode:'open'}));
+const freeShadow = $('outFree').attachShadow({mode:'open'});
+function render(i){ shadows[i].innerHTML = PREVIEW_CSS + $('ed'+i).value; }
+function snapshot(i){ const g = t => shadows[i].querySelector(t); return {h1:g('h1'), h2:g('h2'), h3:g('h3'), p:g('p')}; }
+function say(i, cls, text){ $('mm'+i).className = 'msg ' + cls; $('mm'+i).textContent = text; }
+
+MISSIONS.forEach((M,i) => { $('ed'+i).value = M.code; render(i); });
+
+function tabKey(e, after){
+  if (e.key === 'Tab'){ e.preventDefault(); const t = e.target, s = t.selectionStart; t.setRangeText('  ', s, t.selectionEnd, 'end'); after(); }
+}
+$('missionList').addEventListener('input', e => { if (e.target.matches('textarea.code')) render(+e.target.dataset.i); });
+$('missionList').addEventListener('keydown', e => { if (e.target.matches('textarea.code')) tabKey(e, () => render(+e.target.dataset.i)); });
+['paste','drop'].forEach(ev => $('missionList').addEventListener(ev, e => {
+  if (!e.target.matches('textarea.code')) return;
+  e.preventDefault(); say(+e.target.dataset.i, 'info', 'Paste is turned off. Type the code yourself, it helps you remember!');
+}));
+
+function drawSteps(){
+  $('mSteps').innerHTML = MISSIONS.map((m,i) => `<button class="${st.done[i]?'done':''}" data-go="${i}">M${i+1} ${m.title}</button>`).join('');
+  $('mScore').textContent = st.pts.reduce((a,b)=>a+b,0) + ' / ' + MAX + ' pts';
+}
+$('mSteps').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) $('m'+b.dataset.go).scrollIntoView({behavior:'smooth', block:'start'}); });
+drawSteps();
+
+/* hint code is drawn as a picture so it cannot be selected or copied */
+function codePicture(code){
+  const fs = 20, padX = 18, padY = 14, dpr = 2;
+  const font = `600 ${fs}px "JetBrains Mono", Consolas, "Courier New", monospace`;
+  const c = document.createElement('canvas'), x = c.getContext('2d');
+  x.font = font; const w = Math.ceil(x.measureText(code).width) + padX * 2, h = fs + padY * 2 + 6;
+  c.width = w * dpr; c.height = h * dpr; x.scale(dpr, dpr);
+  x.fillStyle = '#1A2140'; x.beginPath(); x.roundRect ? x.roundRect(0, 0, w, h, 10) : x.rect(0, 0, w, h); x.fill();
+  x.font = font; x.textBaseline = 'middle';
+  let px = padX; const y = h / 2 + 1;
+  code.split(/("[^"]*")/).forEach(part => {
+    if (!part) return;
+    const segs = part.startsWith('"') ? [[part, '#9BE58C']] : part.split(/(\bstyle\b)/).map(s => [s, s === 'style' ? '#FFC66D' : '#7FD3FF']);
+    segs.forEach(([s, col]) => { if (!s) return; x.fillStyle = col; x.fillText(s, px, y); px += x.measureText(s).width; });
+  });
+  const img = new Image(); img.src = c.toDataURL('image/png'); img.alt = 'Hint picture'; img.draggable = false;
+  img.style.width = w + 'px'; return img;
+}
+$('missionList').addEventListener('contextmenu', e => { if (e.target.closest('.hint')) e.preventDefault(); });
+$('missionList').addEventListener('copy', e => { if (e.target.closest && e.target.closest('.hint')) e.preventDefault(); });
+
+function identity(){
+  const n = $('sname').value.trim(), c = $('scls').value;
+  if (n.length < 2) return 'Type your full name at the top of the page first.';
+  if (!c) return 'Choose your class at the top of the page first.';
+  st.name = n; st.cls = c; if (!st.t0) st.t0 = Date.now(); return '';
+}
+
+$('missionList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const i = +b.dataset.i, M = MISSIONS[i];
+  if (b.dataset.act === 'hint'){
+    const h = $('mh'+i);
+    if (!h.dataset.ready){ const p = document.createElement('p'); p.textContent = M.hint.say; h.append(p, codePicture(M.hint.code)); h.dataset.ready = '1'; }
+    h.hidden = !h.hidden; b.textContent = h.hidden ? 'Show a hint' : 'Hide hint'; return;
+  }
+  if (b.dataset.act === 'reset'){ if (!st.done[i]){ $('ed'+i).value = M.code; render(i); } return; }
+  /* check */
+  if (st.done[i]) return;
+  const idErr = identity();
+  if (idErr){ say(i, 'bad', idErr); $('startCard').scrollIntoView({behavior:'smooth'}); setTimeout(() => $(($('sname').value.trim().length < 2) ? 'sname' : 'scls').focus(), 400); return; }
+  render(i);
+  const code = $('ed'+i).value;
+  const problem = M.check(snapshot(i)) ? (lint(code) || M.check(snapshot(i))) : (lint(code) || '');
+  if (!problem){
+    st.done[i] = true; st.pts[i] = Math.max(25, 100 - 25 * st.tries[i]);
+    say(i, 'ok', `Mission complete! +${st.pts[i]} points.` + (st.tries[i] === 0 ? ' Perfect first try!' : ''));
+    b.disabled = true; $('ed'+i).readOnly = true; $('ms'+i).textContent = st.pts[i] + ' pts earned';
+    $('m'+i).classList.add('complete'); drawSteps();
+    if (st.done.every(Boolean)) finish();
+  } else {
+    st.tries[i]++;
+    const next = Math.max(25, 100 - 25 * st.tries[i]);
+    say(i, 'bad', problem + `  (Next correct check: ${next} pts)`); $('ms'+i).textContent = next + ' pts';
+  }
+});
+
+function badgeFor(total){ return total >= 275 ? 'Gold' : total >= 200 ? 'Silver' : 'Bronze'; }
+function finish(){
+  st.seconds = Math.round((Date.now() - st.t0) / 1000);
+  const total = st.pts.reduce((a,b)=>a+b,0), badge = badgeFor(total);
+  $('sname').disabled = true; $('scls').disabled = true;
+  $('resultCard').hidden = false;
+  $('medal').className = 'medal ' + badge; $('medal').textContent = badge;
+  $('rTitle').textContent = `${st.name}, you are a ${badge} Web Stylist! ${total} / ${MAX} points`;
+  $('rBody').innerHTML = MISSIONS.map((m,i) => `<tr><td>${i+1}. ${m.title}</td><td>${st.pts[i]}</td></tr>`).join('') +
+    `<tr><th>Total (${Math.floor(st.seconds/60)} min ${st.seconds%60} s)</th><th>${total}</th></tr>`;
+  setTimeout(() => $('resultCard').scrollIntoView({behavior:'smooth', block:'center'}), 600);
+  save();
+}
+function save(){
+  const msg = $('saveMsg'), total = st.pts.reduce((a,b)=>a+b,0);
+  if (!SCORE_URL){ msg.className='msg info'; msg.textContent = 'Show this screen to your teacher.'; return; }
+  const data = { name:st.name, cls:st.cls, m1:st.pts[0], m2:st.pts[1], m3:st.pts[2], total, badge:badgeFor(total), seconds:st.seconds };
+  msg.className='msg info'; msg.textContent='Sending your score to your teacher...'; $('retrySave').hidden = true;
+  fetch(SCORE_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(data)})
+    .then(() => { msg.className='msg ok'; msg.textContent='Your score has been sent to your teacher.'; })
+    .catch(() => { msg.className='msg bad'; msg.textContent='Could not save. Check the internet and try again.'; $('retrySave').hidden = false; });
+}
+$('retrySave').onclick = save;
+
+const renderFree = () => { freeShadow.innerHTML = PREVIEW_CSS + $('edFree').value; };
+$('edFree').value = '<h1 style="color:Tomato;">My Dream School</h1>\n<p style="background-color:red; color:white;">Write something here.</p>\n<h3 style="color:green;">Made by me</h3>';
+renderFree();
+$('edFree').addEventListener('input', renderFree);
+$('edFree').addEventListener('keydown', e => tabKey(e, renderFree));
+$('freeBtn').onclick = () => { $('freeBlock').hidden = false; $('freeBlock').scrollIntoView({behavior:'smooth', block:'start'}); $('edFree').focus({preventScroll:true}); };
+
+/* ---------- Exit ticket ---------- */
+const EXIT = [
+  {q:'Where do we write an attribute?', o:['Inside the end tag','Inside the start tag','After the end tag'], a:1, why:'Attributes always go inside the start tag.'},
+  {q:'Which code makes the text Tomato?', o:['<p style="color=Tomato">','<p style="colour:Tomato;">','<p style="color:Tomato;">'], a:2, why:'Use a colon and the spelling color.'},
+  {q:'In <code>&lt;p style="background-color:red;"&gt;</code>, what is <code>background-color</code>?', o:['The element name','The property','The content'], a:1, why:'background-color is the CSS property; red is its value.', html:true}
+];
+$('exitBox').innerHTML = EXIT.map((e,i) => `<div class="card exitq"><span class="eyebrow">Question ${i+1}</span><h3>${e.html ? e.q : esc(e.q)}</h3><div class="opts">${e.o.map((o,j)=>`<button class="opt" data-q="${i}" data-j="${j}"><code>${esc(o)}</code></button>`).join('')}</div><div class="msg" id="ex${i}"></div></div>`).join('');
+const exitDone = new Set();
+$('exitBox').addEventListener('click', ev => {
+  const b = ev.target.closest('.opt'); if (!b) return;
+  const i = +b.dataset.q, j = +b.dataset.j, E = EXIT[i];
+  if (exitDone.has(i)) return;
+  if (j === E.a){ b.classList.add('right'); exitDone.add(i); $('ex'+i).className='msg ok'; $('ex'+i).textContent='Correct! ' + E.why; }
+  else { b.classList.add('wrong'); $('ex'+i).className='msg bad'; $('ex'+i).textContent='Not quite. Try again.'; }
+  if (exitDone.size === EXIT.length){ $('exitMsg').className='msg ok'; $('exitMsg').textContent='Exit ticket done. Today you learnt how attributes give extra information to elements.'; }
+});
+</script>
+</body>
+</html>
