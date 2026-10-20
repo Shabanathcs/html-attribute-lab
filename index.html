@@ -134,6 +134,13 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 .steps button:hover{border-color:var(--tomato);color:var(--tomato)}
 .steps button.done{background:var(--ok);border-color:var(--ok);color:#fff}
 .mission{scroll-margin-top:84px}
+.who{position:relative}
+.who .msg{flex:1;min-width:220px}
+.goals{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.goals li{display:flex;gap:10px;align-items:center;font-weight:700}
+.goals li::before{content:"";width:18px;height:18px;border-radius:5px;border:2px solid var(--line);flex:none;background:#fff}
+.goals li.met::before{background:var(--ok);border-color:var(--ok)}
+.goals li .pts{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
 .mission.complete{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok-soft)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -153,6 +160,17 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 </header>
 
 <main class="wrap">
+
+<div id="who" class="card who" hidden>
+  <div class="idrow">
+    <div class="field"><label for="sname">Your full name</label><input id="sname" maxlength="40" placeholder="Type your name" autocomplete="off"></div>
+    <div class="field"><label for="scls">Class</label><select id="scls"><option value="">Select</option></select></div>
+  </div>
+  <div class="row jump">
+    <div class="msg info" id="saveMsg">Type your name and class first. Your points are saved after every mission, the exit ticket and Free Play.</div>
+    <button class="btn ghost" id="retrySave" hidden>Try saving again</button>
+  </div>
+</div>
 
 <!-- ============ 1 WARM-UP ============ -->
 <section class="panel" id="p-warm">
@@ -251,10 +269,6 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
     <span class="eyebrow">Code Missions</span>
     <h1 class="title">Be a web stylist</h1>
     <p class="lead">Write real HTML code in each editor. The preview changes as you type. Press <b>Check my code</b> when you are ready. Each mission gives 100 points on the first try and 25 points less for every wrong check.</p>
-    <div class="idrow">
-      <div class="field"><label for="sname">Your full name</label><input id="sname" maxlength="40" placeholder="Type your name" autocomplete="off"></div>
-      <div class="field"><label for="scls">Class</label><select id="scls"><option value="">Select</option></select></div>
-    </div>
     <div class="row jump">
       <div class="steps" id="mSteps"></div>
       <div class="scorebox" id="mScore">0 / 300 pts</div>
@@ -268,13 +282,16 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
     <div class="medal" id="medal">Gold</div>
     <h2 id="rTitle"></h2>
     <table class="marks"><thead><tr><th>Mission</th><th>Points</th></tr></thead><tbody id="rBody"></tbody></table>
-    <div class="msg info" id="saveMsg"></div>
-    <div class="row"><button class="btn ghost" id="retrySave" hidden>Try saving again</button><button class="btn" id="freeBtn">Free play: design your own card</button></div>
+    <p class="lead">Try Free Play below for up to 50 bonus points, then do the Exit Ticket.</p>
   </div>
 
-  <article id="freeBlock" hidden class="card mission">
-    <div class="def"><span class="eyebrow">Free play</span><h2>Design your own card</h2></div>
-    <p>Change any text and try other colour names like gold, navy, green or pink. Use <code class="inline">color</code> and <code class="inline">background-color</code> on at least three elements.</p>
+  <article id="freeBlock" class="card mission">
+    <div class="mhead">
+      <div class="def"><span class="eyebrow">Free Play · bonus</span><h2>Design your own card</h2></div>
+      <div class="scorebox" id="freeScore">0 / 50 pts</div>
+    </div>
+    <p>Change the text to anything you like and try colour names like gold, navy, green or pink. Earn points for each goal:</p>
+    <ul class="goals" id="freeGoals"></ul>
     <div class="bench">
       <div class="pane editor">
         <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>my-card.html</span></div>
@@ -282,6 +299,8 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
       </div>
       <div class="pane preview"><div class="bar"><span>Browser preview</span><span>live</span></div><div class="out" id="outFree"></div></div>
     </div>
+    <div class="msg" id="freeMsg" aria-live="polite"></div>
+    <div class="row"><button class="btn tomato" id="freeSubmit">Submit my card</button></div>
   </article>
 </section>
 
@@ -290,7 +309,7 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
   <div class="def">
     <span class="eyebrow">Plenary</span>
     <h1 class="title">Exit Ticket</h1>
-    <p class="lead">Answer the three questions. Then discuss your answers with your partner.</p>
+    <p class="lead">Answer the three questions. You get 1 point for each question you answer correctly on the first try. Then discuss your answers with your partner.</p>
   </div>
   <div id="exitBox" class="grid2"></div>
   <div class="msg" id="exitMsg"></div>
@@ -311,6 +330,7 @@ document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('cl
 function showTab(p){
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.p === p)));
   ['warm','learn','code','exit'].forEach(k => $('p-' + k).hidden = k !== p);
+  $('who').hidden = !(p === 'code' || p === 'exit');
   window.scrollTo({top:0});
   try{ localStorage.setItem('attrlab-tab', p); }catch(e){}
 }
@@ -422,15 +442,13 @@ const MISSIONS = [
     check: s => need(s,'p','a <p> paragraph') || hasStyle(s.p,'p') || colorIs(s.p,'background-color',RED,'The paragraph background is not red yet. Use style="background-color:red;"')
   },
   {
-    title:'Proud of the UAE', story:'Design a National Day card using both of today\'s styles.',
-    tasks:['Make the <code class="inline">&lt;h1&gt;</code> text Tomato.','Give the <code class="inline">&lt;p&gt;</code> a red background.','Give the <code class="inline">&lt;h3&gt;</code> white text AND a red background in one style attribute.'],
-    code:'<h1>Proud of the UAE</h1>\n<p>Our flag has four colours: red, green, white and black.</p>\n<h3>Happy National Day!</h3>',
+    title:'Proud of the UAE', story:'Make a National Day banner using both of today\'s styles in one tag.',
+    tasks:['Give the <code class="inline">&lt;h3&gt;</code> white text AND a red background in one style attribute.'],
+    code:'<h3>Happy National Day!</h3>',
     hint:{say:'For two properties, put a semicolon between them:', code:'<h3 style="color:white; background-color:red;">'},
-    check: s => need(s,'h1','an <h1> heading') || need(s,'p','a <p> paragraph') || need(s,'h3','an <h3> heading') ||
-      colorIs(s.h1,'color',TOMATO,'Task 1: the <h1> text is not Tomato yet.') ||
-      colorIs(s.p,'background-color',RED,'Task 2: the <p> background is not red yet.') ||
-      colorIs(s.h3,'color',WHITE,'Task 3: the <h3> text should be white.') ||
-      colorIs(s.h3,'background-color',RED,'Task 3: the <h3> background should be red.')
+    check: s => need(s,'h3','an <h3> heading') ||
+      colorIs(s.h3,'color',WHITE,'The <h3> text should be white. Use color:white;') ||
+      colorIs(s.h3,'background-color',RED,'The <h3> background should be red. Add background-color:red; after a semicolon.')
   }
 ];
 
@@ -455,7 +473,7 @@ function need(s, tag, name){ return s[tag] ? '' : `I can't find ${name}. Did a t
 function hasStyle(el, tag){ return el.hasAttribute('style') ? '' : `Add the style attribute inside the <${tag}> start tag.`; }
 function colorIs(el, prop, want, msg){ return getComputedStyle(el).getPropertyValue(prop).trim() === want ? '' : msg; }
 
-const st = { name:'', cls:'', tries:MISSIONS.map(()=>0), pts:MISSIONS.map(()=>0), done:MISSIONS.map(()=>false), t0:0, seconds:0 };
+const st = { sid:'', seq:0, name:'', cls:'', tries:MISSIONS.map(()=>0), pts:MISSIONS.map(()=>0), done:MISSIONS.map(()=>false), t0:0, seconds:0, exit:0, exitDone:0, free:0 };
 const MAX = MISSIONS.length * 100;
 CLASSES.forEach(c => { const o = document.createElement('option'); o.value = o.textContent = c; $('scls').appendChild(o); });
 
@@ -535,7 +553,15 @@ function identity(){
   const n = $('sname').value.trim(), c = $('scls').value;
   if (n.length < 2) return 'Type your full name at the top of the page first.';
   if (!c) return 'Choose your class at the top of the page first.';
-  st.name = n; st.cls = c; if (!st.t0) st.t0 = Date.now(); return '';
+  st.name = n; st.cls = c; if (!st.t0) st.t0 = Date.now();
+  if (!st.sid) st.sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  return '';
+}
+function needId(showErr){
+  const e = identity(); if (!e) return true;
+  showErr(e); $('who').scrollIntoView({behavior:'smooth'});
+  setTimeout(() => $(($('sname').value.trim().length < 2) ? 'sname' : 'scls').focus(), 400);
+  return false;
 }
 
 $('missionList').addEventListener('click', e => {
@@ -549,8 +575,7 @@ $('missionList').addEventListener('click', e => {
   if (b.dataset.act === 'reset'){ if (!st.done[i]){ $('ed'+i).value = M.code; render(i); } return; }
   /* check */
   if (st.done[i]) return;
-  const idErr = identity();
-  if (idErr){ say(i, 'bad', idErr); $('startCard').scrollIntoView({behavior:'smooth'}); setTimeout(() => $(($('sname').value.trim().length < 2) ? 'sname' : 'scls').focus(), 400); return; }
+  if (!needId(m => say(i, 'bad', m))) return;
   render(i);
   const code = $('ed'+i).value;
   const problem = M.check(snapshot(i)) ? (lint(code) || M.check(snapshot(i))) : (lint(code) || '');
@@ -559,7 +584,7 @@ $('missionList').addEventListener('click', e => {
     say(i, 'ok', `Mission complete! +${st.pts[i]} points.` + (st.tries[i] === 0 ? ' Perfect first try!' : ''));
     b.disabled = true; $('ed'+i).readOnly = true; $('ms'+i).textContent = st.pts[i] + ' pts earned';
     $('m'+i).classList.add('complete'); drawSteps();
-    if (st.done.every(Boolean)) finish();
+    if (st.done.every(Boolean)) finish(); else save('Mission ' + (i+1));
   } else {
     st.tries[i]++;
     const next = Math.max(25, 100 - 25 * st.tries[i]);
@@ -568,35 +593,67 @@ $('missionList').addEventListener('click', e => {
 });
 
 function badgeFor(total){ return total >= 275 ? 'Gold' : total >= 200 ? 'Silver' : 'Bronze'; }
+const missionsTotal = () => st.pts.reduce((a,b)=>a+b,0);
 function finish(){
-  st.seconds = Math.round((Date.now() - st.t0) / 1000);
-  const total = st.pts.reduce((a,b)=>a+b,0), badge = badgeFor(total);
-  $('sname').disabled = true; $('scls').disabled = true;
+  const total = missionsTotal(), badge = badgeFor(total), secs = Math.round((Date.now() - st.t0) / 1000);
   $('resultCard').hidden = false;
   $('medal').className = 'medal ' + badge; $('medal').textContent = badge;
   $('rTitle').textContent = `${st.name}, you are a ${badge} Web Stylist! ${total} / ${MAX} points`;
   $('rBody').innerHTML = MISSIONS.map((m,i) => `<tr><td>${i+1}. ${m.title}</td><td>${st.pts[i]}</td></tr>`).join('') +
-    `<tr><th>Total (${Math.floor(st.seconds/60)} min ${st.seconds%60} s)</th><th>${total}</th></tr>`;
+    `<tr><th>Total (${Math.floor(secs/60)} min ${secs%60} s)</th><th>${total}</th></tr>`;
   setTimeout(() => $('resultCard').scrollIntoView({behavior:'smooth', block:'center'}), 600);
-  save();
+  save('All 3 missions');
 }
-function save(){
-  const msg = $('saveMsg'), total = st.pts.reduce((a,b)=>a+b,0);
-  if (!SCORE_URL){ msg.className='msg info'; msg.textContent = 'Show this screen to your teacher.'; return; }
-  const data = { name:st.name, cls:st.cls, m1:st.pts[0], m2:st.pts[1], m3:st.pts[2], total, badge:badgeFor(total), seconds:st.seconds };
-  msg.className='msg info'; msg.textContent='Sending your score to your teacher...'; $('retrySave').hidden = true;
+let lastWhat = '';
+function save(what){
+  if (what) lastWhat = what;
+  $('sname').disabled = true; $('scls').disabled = true;   // one student per session once saving starts
+  const msg = $('saveMsg'), total = missionsTotal(), doneN = st.done.filter(Boolean).length;
+  st.seconds = Math.round((Date.now() - st.t0) / 1000);
+  if (!SCORE_URL){ msg.className='msg info'; msg.textContent = `${lastWhat} done. Show this screen to your teacher.`; return; }
+  st.seq++;
+  const data = { sid:st.sid, seq:st.seq, name:st.name, cls:st.cls, m1:st.pts[0], m2:st.pts[1], m3:st.pts[2], total,
+    done:doneN, badge: doneN === MISSIONS.length ? badgeFor(total) : `Incomplete (${doneN}/${MISSIONS.length})`,
+    exit: st.exitDone ? st.exit : '', free: st.free || '', seconds:st.seconds };
+  msg.className='msg info'; msg.textContent = `Saving ${lastWhat}...`; $('retrySave').hidden = true;
   fetch(SCORE_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(data)})
-    .then(() => { msg.className='msg ok'; msg.textContent='Your score has been sent to your teacher.'; })
-    .catch(() => { msg.className='msg bad'; msg.textContent='Could not save. Check the internet and try again.'; $('retrySave').hidden = false; });
+    .then(() => { msg.className='msg ok'; msg.textContent = `Saved for ${st.name}: Missions ${total}/${MAX}` + (st.exitDone ? ` · Exit Ticket ${st.exit}/3` : '') + (st.free ? ` · Free Play ${st.free}/50` : '') + '.'; })
+    .catch(() => { msg.className='msg bad'; msg.textContent='Could not save. Check the internet and press Try saving again.'; $('retrySave').hidden = false; });
 }
-$('retrySave').onclick = save;
+$('retrySave').onclick = () => save();
 
-const renderFree = () => { freeShadow.innerHTML = PREVIEW_CSS + $('edFree').value; };
-$('edFree').value = '<h1 style="color:Tomato;">My Dream School</h1>\n<p style="background-color:red; color:white;">Write something here.</p>\n<h3 style="color:green;">Made by me</h3>';
+/* ---------- Free Play (bonus, max 50) ---------- */
+const FREE_GOALS = [
+  ['Style at least 3 elements', 20, els => els.length >= 3],
+  ['Use color', 10, els => els.some(e => e.style.color)],
+  ['Use background-color', 10, els => els.some(e => e.style.backgroundColor)],
+  ['Use two properties in one tag', 10, els => els.some(e => e.style.color && e.style.backgroundColor)]
+];
+$('freeGoals').innerHTML = FREE_GOALS.map(([t,p],k) => `<li id="fg${k}">${t}<span class="pts">+${p}</span></li>`).join('');
+function freeEval(){
+  const els = [...freeShadow.querySelectorAll('[style]')].filter(e => e.style.color || e.style.backgroundColor);
+  let pts = 0;
+  FREE_GOALS.forEach(([t,p,test],k) => { const ok = test(els); $('fg'+k).classList.toggle('met', ok); if (ok) pts += p; });
+  return pts;
+}
+const renderFree = () => { freeShadow.innerHTML = PREVIEW_CSS + $('edFree').value; freeEval(); };
+$('edFree').value = '<h1>My Dream School</h1>\n<p>Write something here.</p>\n<h3>Made by me</h3>';
 renderFree();
 $('edFree').addEventListener('input', renderFree);
 $('edFree').addEventListener('keydown', e => tabKey(e, renderFree));
-$('freeBtn').onclick = () => { $('freeBlock').hidden = false; $('freeBlock').scrollIntoView({behavior:'smooth', block:'start'}); $('edFree').focus({preventScroll:true}); };
+['paste','drop'].forEach(ev => $('edFree').addEventListener(ev, e => { e.preventDefault(); $('freeMsg').className='msg info'; $('freeMsg').textContent='Paste is turned off. Type the code yourself!'; }));
+$('freeSubmit').onclick = () => {
+  if (!needId(m => { $('freeMsg').className='msg bad'; $('freeMsg').textContent = m; })) return;
+  renderFree();
+  const problem = lint($('edFree').value), pts = freeEval();
+  if (problem){ $('freeMsg').className='msg bad'; $('freeMsg').textContent = problem; return; }
+  if (!pts){ $('freeMsg').className='msg bad'; $('freeMsg').textContent = 'Add a style attribute with color or background-color first.'; return; }
+  const best = Math.max(st.free, pts), improved = pts > st.free;
+  st.free = best; $('freeScore').textContent = best + ' / 50 pts';
+  $('freeMsg').className='msg ok';
+  $('freeMsg').textContent = improved ? `Card submitted: ${pts} / 50 bonus points!` + (pts < 50 ? ' Reach more goals and submit again.' : ' Full marks!') : `Your best is still ${best} / 50. Reach more goals to improve it.`;
+  if (improved) save('Free Play');
+};
 
 /* ---------- Exit ticket ---------- */
 const EXIT = [
@@ -605,14 +662,22 @@ const EXIT = [
   {q:'In <code>&lt;p style="background-color:red;"&gt;</code>, what is <code>background-color</code>?', o:['The element name','The property','The content'], a:1, why:'background-color is the CSS property; red is its value.', html:true}
 ];
 $('exitBox').innerHTML = EXIT.map((e,i) => `<div class="card exitq"><span class="eyebrow">Question ${i+1}</span><h3>${e.html ? e.q : esc(e.q)}</h3><div class="opts">${e.o.map((o,j)=>`<button class="opt" data-q="${i}" data-j="${j}"><code>${esc(o)}</code></button>`).join('')}</div><div class="msg" id="ex${i}"></div></div>`).join('');
-const exitDone = new Set();
+const exitDone = new Set(), exitTried = new Set();
 $('exitBox').addEventListener('click', ev => {
   const b = ev.target.closest('.opt'); if (!b) return;
   const i = +b.dataset.q, j = +b.dataset.j, E = EXIT[i];
   if (exitDone.has(i)) return;
-  if (j === E.a){ b.classList.add('right'); exitDone.add(i); $('ex'+i).className='msg ok'; $('ex'+i).textContent='Correct! ' + E.why; }
-  else { b.classList.add('wrong'); $('ex'+i).className='msg bad'; $('ex'+i).textContent='Not quite. Try again.'; }
-  if (exitDone.size === EXIT.length){ $('exitMsg').className='msg ok'; $('exitMsg').textContent='Exit ticket done. Today you learnt how attributes give extra information to elements.'; }
+  if (!needId(m => { $('ex'+i).className='msg bad'; $('ex'+i).textContent = m; })) return;
+  const first = !exitTried.has(i); exitTried.add(i);
+  if (j === E.a){
+    b.classList.add('right'); exitDone.add(i); if (first) st.exit++;
+    $('ex'+i).className='msg ok'; $('ex'+i).textContent = (first ? 'Correct! +1 point. ' : 'Correct! ') + E.why;
+  } else { b.classList.add('wrong'); $('ex'+i).className='msg bad'; $('ex'+i).textContent='Not quite. Try again (no point for this question now).'; }
+  if (exitDone.size === EXIT.length){
+    st.exitDone = 1;
+    $('exitMsg').className='msg ok'; $('exitMsg').textContent=`Exit ticket done: ${st.exit} / 3 points. Today you learnt how attributes give extra information to elements.`;
+    save('Exit Ticket');
+  }
 });
 </script>
 </body>
