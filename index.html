@@ -402,27 +402,27 @@ const MISSIONS = [
   {
     title:'Tomato Title',
     q:'Change the text colour of <q>Welcome to Sharjah Indian School</q> to Tomato.',
-    code:'<h1 style="">Welcome to Sharjah Indian School</h1>',
+    code:'<h1>Welcome to Sharjah Indian School</h1>',
     goal:'<h1 style="color:Tomato;">Welcome to Sharjah Indian School</h1>',
-    hint:{say:'Type color:Tomato; inside the quotes:', code:'<h1 style="color:Tomato;">'},
-    check: s => need(s,'h1','the <h1> heading') || colorIs(s.h1,'color',TOMATO,'The text is not Tomato yet. Type color:Tomato; inside the quotes.')
+    hint:{say:'Add the style attribute inside the start tag:', code:'<h1 style="color:Tomato;">'},
+    check: s => need(s,'h1','the <h1> heading') || hasStyle(s.h1,'h1') || colorIs(s.h1,'color',TOMATO,'The text is not Tomato yet. Use style="color:Tomato;"')
   },
   {
     title:'Red Alert Box',
     q:'Change the background colour of <q>Fire drill at 10:00 am</q> to red.',
-    code:'<p style="">Fire drill at 10:00 am</p>',
+    code:'<p>Fire drill at 10:00 am</p>',
     goal:'<p style="background-color:red;">Fire drill at 10:00 am</p>',
-    hint:{say:'Type background-color:red; inside the quotes:', code:'<p style="background-color:red;">'},
-    check: s => need(s,'p','the <p> paragraph') || colorIs(s.p,'background-color',RED,'The background is not red yet. Type background-color:red; inside the quotes.')
+    hint:{say:'Add the style attribute inside the start tag:', code:'<p style="background-color:red;">'},
+    check: s => need(s,'p','the <p> paragraph') || hasStyle(s.p,'p') || colorIs(s.p,'background-color',RED,'The background is not red yet. Use style="background-color:red;"')
   },
   {
     title:'Proud of the UAE',
     q:'Make <q>Happy National Day!</q> white text on a red background.',
-    code:'<h3 style="">Happy National Day!</h3>',
+    code:'<h3>Happy National Day!</h3>',
     goal:'<h3 style="color:white; background-color:red;">Happy National Day!</h3>',
-    hint:{say:'Two properties, with a semicolon between them:', code:'<h3 style="color:white; background-color:red;">'},
-    check: s => need(s,'h3','the <h3> heading') ||
-      colorIs(s.h3,'color',WHITE,'The text should be white. Type color:white; inside the quotes.') ||
+    hint:{say:'Two properties in one style attribute, with a semicolon between them:', code:'<h3 style="color:white; background-color:red;">'},
+    check: s => need(s,'h3','the <h3> heading') || hasStyle(s.h3,'h3') ||
+      colorIs(s.h3,'color',WHITE,'The text should be white. Use color:white; inside style="".') ||
       colorIs(s.h3,'background-color',RED,'The background should be red. Add background-color:red; after the semicolon.')
   }
 ];
@@ -460,7 +460,7 @@ $('missionList').innerHTML = MISSIONS.map((M,i) => `
       <div class="scorebox" id="ms${i}">100 pts</div>
     </div>
     <p class="task">${M.q}</p>
-    <p class="howto">Type inside the quotes of style="". Your page changes as you type. When your code is correct, the mission completes by itself.</p>
+    <p class="howto">Add the style attribute inside the start tag. Your page changes as you type. When your code is correct, the mission completes by itself.</p>
     <div class="bench">
       <div class="pane editor">
         <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>mission${i+1}.html · type here</span></div>
@@ -630,7 +630,7 @@ function freeEval(){
   return pts;
 }
 const renderFree = () => { freeShadow.innerHTML = PREVIEW_CSS + $('edFree').value; freeEval(); };
-$('edFree').value = '<h1 style="">My Dream School</h1>\n<p style="">Write something here.</p>\n<h3 style="">Made by me</h3>';
+$('edFree').value = '<h1>My Dream School</h1>\n<p>Write something here.</p>\n<h3>Made by me</h3>';
 renderFree();
 $('edFree').addEventListener('input', renderFree);
 $('edFree').addEventListener('keydown', e => tabKey(e, renderFree));
