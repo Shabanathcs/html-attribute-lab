@@ -142,6 +142,13 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 .mission{scroll-margin-top:84px}
 .who{position:relative;margin-bottom:22px}
 .idbar .msg{flex:1;min-width:220px}
+.taskpill{display:inline-flex;align-items:baseline;gap:8px;align-self:flex-start;background:var(--ink);color:#fff;font:800 1.35rem var(--display);padding:6px 18px;border-radius:999px;letter-spacing:.02em}
+.taskpill small{font-size:.75em;opacity:.75;font-weight:700}
+#m1 .taskpill{background:#2F6FDB} #m2 .taskpill{background:var(--ok)}
+.starthere{display:inline-block;align-self:flex-start;font:800 .95rem var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--tomato)}
+.mission.featured .taskpill{background:var(--tomato);font-size:clamp(2rem,4.5vw,3rem);padding:10px 30px;box-shadow:0 6px 0 #C8432C;animation:pop 1.6s ease-in-out infinite alternate}
+@keyframes pop{from{transform:scale(1)}to{transform:scale(1.05)}}
+.mission.featured.complete .taskpill{background:var(--ok);box-shadow:0 6px 0 #096B52;animation:none}
 /* each mission box gets its own light colour */
 #m0{background:#FFF1ED}
 #m1{background:#EEF4FF;border:2px solid #C9DAFB}
@@ -175,7 +182,7 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
     <nav class="tabs" role="tablist" aria-label="Lesson sections">
       <button role="tab" id="tab-warm" aria-selected="true" data-p="warm"><span class="n">1</span>Warm-up</button>
       <button role="tab" id="tab-learn" aria-selected="false" data-p="learn"><span class="n">2</span>Learn</button>
-      <button role="tab" id="tab-code" aria-selected="false" data-p="code"><span class="n">3</span>Code Missions</button>
+      <button role="tab" id="tab-code" aria-selected="false" data-p="code"><span class="n">3</span>Code Tasks</button>
       <button role="tab" id="tab-exit" aria-selected="false" data-p="exit"><span class="n">4</span>Exit Ticket</button>
     </nav>
   </div>
@@ -189,7 +196,7 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
     <div class="field"><label for="scls">Class</label><select id="scls"><option value="">Select</option></select></div>
   </div>
   <div class="row jump">
-    <div class="msg info" id="saveMsg">Type your name and class first. Your points are saved after the Starter Quiz, every mission, Free Play and the Exit Ticket.</div>
+    <div class="msg info" id="saveMsg">Type your name and class first. Your points are saved after the Starter Quiz, every task, Free Play and the Exit Ticket.</div>
     <button class="btn ghost" id="retrySave" hidden>Try saving again</button>
   </div>
 </div>
@@ -285,8 +292,8 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 <!-- ============ 3 CODE MISSIONS ============ -->
 <section class="panel" id="p-code" hidden>
   <div id="startCard" class="card">
-    <span class="eyebrow">Code Missions · Be a web stylist</span>
-    <p class="lead">Start with Mission 1 below. Each mission gives 100 points when you complete it. Mistakes do not cut your points, so keep fixing your code until it works!</p>
+    <span class="eyebrow">Code Tasks · Be a web stylist</span>
+    <p class="lead">Start with Task 1 below. Each task gives 100 points when you complete it. Mistakes do not cut your points, so keep fixing your code until it works!</p>
     <div class="row idbar"><div class="msg info idline">Type your name and class in the Warm-up tab first.</div><button class="btn ghost goWarm">Go to Warm-up</button></div>
     <div class="row jump">
       <div class="steps" id="mSteps"></div>
@@ -297,10 +304,10 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
   <div id="missionList" class="panel"></div>
 
   <div id="resultCard" hidden class="card result">
-    <span class="eyebrow">Missions complete</span>
+    <span class="eyebrow">All tasks complete</span>
     <div class="medal" id="medal">Gold</div>
     <h2 id="rTitle"></h2>
-    <table class="marks"><thead><tr><th>Mission</th><th>Points</th></tr></thead><tbody id="rBody"></tbody></table>
+    <table class="marks"><thead><tr><th>Task</th><th>Points</th></tr></thead><tbody id="rBody"></tbody></table>
     <p class="lead">Try Free Play below for up to 50 bonus points, then do the Exit Ticket.</p>
   </div>
 
@@ -470,15 +477,15 @@ CLASSES.forEach(c => { const o = document.createElement('option'); o.value = o.t
 $('missionList').innerHTML = MISSIONS.map((M,i) => `
   <article class="card mission${i === 0 ? ' featured' : ''}" id="m${i}">
     <div class="mhead">
-      <div class="def"><span class="eyebrow">${i === 0 ? 'Start here · ' : ''}Mission ${i+1} of ${MISSIONS.length}</span><h2>${M.title}</h2></div>
+      <div class="def">${i === 0 ? '<span class="starthere">Start here</span>' : ''}<span class="taskpill">Task ${i+1} <small>of ${MISSIONS.length}</small></span><h2>${M.title}</h2></div>
       <div class="scorebox" id="ms${i}">100 pts</div>
     </div>
     <p class="task">${M.q}</p>
-    <p class="howto">Add the style attribute inside the start tag. Your page changes as you type. When your code is correct, the mission completes by itself.</p>
+    <p class="howto">Add the style attribute inside the start tag. Your page changes as you type. When your code is correct, the task completes by itself.</p>
     <div class="bench">
       <div class="pane editor">
-        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>mission${i+1}.html · type here</span></div>
-        <textarea class="code" id="ed${i}" data-i="${i}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Mission ${i+1} code editor"></textarea>
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>task${i+1}.html · type here</span></div>
+        <textarea class="code" id="ed${i}" data-i="${i}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Task ${i+1} code editor"></textarea>
       </div>
       <div class="previews">
         <div class="pane preview"><div class="bar"><span>Your page</span><span>live</span></div><div class="out" id="out${i}"></div></div>
@@ -521,7 +528,7 @@ $('missionList').addEventListener('keydown', e => { if (e.target.matches('textar
 }));
 
 function drawSteps(){
-  $('mSteps').innerHTML = MISSIONS.map((m,i) => `<button class="${st.done[i]?'done':''}" data-go="${i}">M${i+1} ${m.title}</button>`).join('');
+  $('mSteps').innerHTML = MISSIONS.map((m,i) => `<button class="${st.done[i]?'done':''}" data-go="${i}">Task ${i+1}: ${m.title}</button>`).join('');
   $('mScore').textContent = st.pts.reduce((a,b)=>a+b,0) + ' / ' + MAX + ' pts';
 }
 $('mSteps').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) $('m'+b.dataset.go).scrollIntoView({behavior:'smooth', block:'start'}); });
@@ -588,10 +595,10 @@ function runCheck(i){
   const problem = M.check(snapshot(i)) ? (lint(code) || M.check(snapshot(i))) : (lint(code) || '');
   if (!problem){
     st.done[i] = true; st.pts[i] = 100;
-    say(i, 'ok', 'Mission complete! +100 points.');
+    say(i, 'ok', 'Task complete! +100 points.');
     b.disabled = true; $('ed'+i).readOnly = true; $('ms'+i).textContent = st.pts[i] + ' pts earned';
     $('m'+i).classList.add('complete'); drawSteps();
-    if (st.done.every(Boolean)) finish(); else save('Mission ' + (i+1));
+    if (st.done.every(Boolean)) finish(); else save('Task ' + (i+1));
   } else {
     st.tries[i]++;
     say(i, 'bad', problem + '  Fix it and check again.');
@@ -608,7 +615,7 @@ function finish(){
   $('rBody').innerHTML = MISSIONS.map((m,i) => `<tr><td>${i+1}. ${m.title}</td><td>${st.pts[i]}</td></tr>`).join('') +
     `<tr><th>Total (${Math.floor(secs/60)} min ${secs%60} s)</th><th>${total}</th></tr>`;
   setTimeout(() => $('resultCard').scrollIntoView({behavior:'smooth', block:'center'}), 600);
-  save('All 3 missions');
+  save('All 3 tasks');
 }
 let lastWhat = '';
 function save(what){
@@ -624,7 +631,7 @@ function save(what){
     q1: st.exitQ[0], q2: st.exitQ[1], q3: st.exitQ[2], exit: st.exitQ.some(v => v !== '') ? st.exit : '', free: st.free || '', seconds:st.seconds };
   msg.className='msg info'; msg.textContent = `Saving ${lastWhat}...`; $('retrySave').hidden = true;
   fetch(SCORE_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(data)})
-    .then(() => { msg.className='msg ok'; msg.textContent = `Saved for ${st.name}: ` + (st.startQ.some(v => v !== '') ? `Starter ${st.start}/3 · ` : '') + `Missions ${total}/${MAX}` + (st.exitQ.some(v => v !== '') ? ` · Exit Ticket ${st.exit}/3` : '') + (st.free ? ` · Free Play ${st.free}/50` : '') + '.'; })
+    .then(() => { msg.className='msg ok'; msg.textContent = `Saved for ${st.name}: ` + (st.startQ.some(v => v !== '') ? `Starter ${st.start}/3 · ` : '') + `Tasks ${total}/${MAX}` + (st.exitQ.some(v => v !== '') ? ` · Exit Ticket ${st.exit}/3` : '') + (st.free ? ` · Free Play ${st.free}/50` : '') + '.'; })
     .catch(() => { msg.className='msg bad'; msg.textContent='Could not save. Check the internet and press Try saving again.'; $('retrySave').hidden = false; });
 }
 $('retrySave').onclick = () => save();
