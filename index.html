@@ -460,15 +460,14 @@ $('missionList').innerHTML = MISSIONS.map((M,i) => `
       <div class="scorebox" id="ms${i}">100 pts</div>
     </div>
     <p class="task">${M.q}</p>
-    <p class="howto">Type inside the quotes of style="". Your page changes as you type. When it looks like the Goal, the mission is done.</p>
+    <p class="howto">Type inside the quotes of style="". Your page changes as you type. When your code is correct, the mission completes by itself.</p>
     <div class="bench">
       <div class="pane editor">
         <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>mission${i+1}.html · type here</span></div>
         <textarea class="code" id="ed${i}" data-i="${i}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Mission ${i+1} code editor"></textarea>
       </div>
       <div class="previews">
-        <div class="pane preview goal"><div class="bar"><span>Goal</span><span>make yours look like this</span></div><div class="out small" id="goal${i}"></div></div>
-        <div class="pane preview"><div class="bar"><span>Your page</span><span>live</span></div><div class="out small" id="out${i}"></div></div>
+        <div class="pane preview"><div class="bar"><span>Your page</span><span>live</span></div><div class="out" id="out${i}"></div></div>
       </div>
     </div>
     <div class="msg" id="mm${i}" aria-live="polite"></div>
@@ -489,7 +488,6 @@ function say(i, cls, text){ $('mm'+i).className = 'msg ' + cls; $('mm'+i).textCo
 
 MISSIONS.forEach((M,i) => {
   $('ed'+i).value = M.code; render(i);
-  $('goal'+i).attachShadow({mode:'open'}).innerHTML = PREVIEW_CSS + M.goal;
 });
 /* auto-complete: as soon as the code is right, the mission is done (no button needed) */
 const autoT = {};
