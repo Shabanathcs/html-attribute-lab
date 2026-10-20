@@ -142,6 +142,15 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 .mission{scroll-margin-top:84px}
 .who{position:relative;margin-bottom:22px}
 .idbar .msg{flex:1;min-width:220px}
+.mission.featured{border:3px solid var(--tomato);box-shadow:0 10px 30px rgba(255,99,71,.18);padding:28px}
+.mission.featured.complete{border-color:var(--ok)}
+.mission.featured h2{font-size:1.9rem}
+.mission.featured .eyebrow{font-size:.95rem}
+.mission.featured .task{font-size:clamp(1.7rem,3.2vw,2.4rem);line-height:1.25}
+.mission.featured .howto{font-size:1.1rem}
+.mission.featured textarea.code{font-size:24px!important;min-height:190px}
+.mission.featured .out{font-size:1.15em;min-height:190px}
+.mission.featured .btn{font-size:1.15rem;padding:14px 22px}
 .who .msg{flex:1;min-width:220px}
 .goals{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .goals li{display:flex;gap:10px;align-items:center;font-weight:700}
@@ -270,9 +279,8 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 <!-- ============ 3 CODE MISSIONS ============ -->
 <section class="panel" id="p-code" hidden>
   <div id="startCard" class="card">
-    <span class="eyebrow">Code Missions</span>
-    <h1 class="title">Be a web stylist</h1>
-    <p class="lead">Write real HTML code in each editor. The preview changes as you type. Press <b>Check my code</b> when you are ready. Each mission gives 100 points when you complete it. Mistakes do not cut your points, so keep fixing your code until it works!</p>
+    <span class="eyebrow">Code Missions · Be a web stylist</span>
+    <p class="lead">Start with Mission 1 below. Each mission gives 100 points when you complete it. Mistakes do not cut your points, so keep fixing your code until it works!</p>
     <div class="row idbar"><div class="msg info idline">Type your name and class in the Warm-up tab first.</div><button class="btn ghost goWarm">Go to Warm-up</button></div>
     <div class="row jump">
       <div class="steps" id="mSteps"></div>
@@ -454,9 +462,9 @@ CLASSES.forEach(c => { const o = document.createElement('option'); o.value = o.t
 
 /* build all missions on one page */
 $('missionList').innerHTML = MISSIONS.map((M,i) => `
-  <article class="card mission" id="m${i}">
+  <article class="card mission${i === 0 ? ' featured' : ''}" id="m${i}">
     <div class="mhead">
-      <div class="def"><span class="eyebrow">Mission ${i+1} of ${MISSIONS.length}</span><h2>${M.title}</h2></div>
+      <div class="def"><span class="eyebrow">${i === 0 ? 'Start here · ' : ''}Mission ${i+1} of ${MISSIONS.length}</span><h2>${M.title}</h2></div>
       <div class="scorebox" id="ms${i}">100 pts</div>
     </div>
     <p class="task">${M.q}</p>
