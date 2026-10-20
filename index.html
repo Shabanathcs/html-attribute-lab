@@ -141,6 +141,7 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 .steps button.done{background:var(--ok);border-color:var(--ok);color:#fff}
 .mission{scroll-margin-top:84px}
 .who{position:relative;margin-bottom:22px}
+.idbar .msg{flex:1;min-width:220px}
 .who .msg{flex:1;min-width:220px}
 .goals{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .goals li{display:flex;gap:10px;align-items:center;font-weight:700}
@@ -272,6 +273,7 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
     <span class="eyebrow">Code Missions</span>
     <h1 class="title">Be a web stylist</h1>
     <p class="lead">Write real HTML code in each editor. The preview changes as you type. Press <b>Check my code</b> when you are ready. Each mission gives 100 points when you complete it. Mistakes do not cut your points, so keep fixing your code until it works!</p>
+    <div class="row idbar"><div class="msg info idline">Type your name and class in the Warm-up tab first.</div><button class="btn ghost goWarm">Go to Warm-up</button></div>
     <div class="row jump">
       <div class="steps" id="mSteps"></div>
       <div class="scorebox" id="mScore">0 / 300 pts</div>
@@ -314,6 +316,7 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
     <h1 class="title">Exit Ticket</h1>
     <p class="lead">Answer the three questions. You get 1 point for each question you answer correctly on the first try. Then discuss your answers with your partner.</p>
   </div>
+  <div class="row idbar"><div class="msg info idline">Type your name and class in the Warm-up tab first.</div><button class="btn ghost goWarm">Go to Warm-up</button></div>
   <div id="exitBox" class="grid2"></div>
   <div class="msg" id="exitMsg"></div>
 </section>
@@ -333,7 +336,7 @@ document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('cl
 function showTab(p){
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.p === p)));
   ['warm','learn','code','exit'].forEach(k => $('p-' + k).hidden = k !== p);
-  $('who').hidden = p === 'learn';
+  $('who').hidden = p !== 'warm';
   window.scrollTo({top:0});
   try{ localStorage.setItem('attrlab-tab', p); }catch(e){}
 }
@@ -543,6 +546,11 @@ function identity(){
 }
 function needId(showErr){
   const e = identity(); if (!e) return true;
+  if ($('who').hidden){
+    showErr('Type your name and class in the Warm-up tab first. Taking you there...');
+    setTimeout(() => { showTab('warm'); $(($('sname').value.trim().length < 2) ? 'sname' : 'scls').focus(); }, 1400);
+    return false;
+  }
   showErr(e); $('who').scrollIntoView({behavior:'smooth'});
   setTimeout(() => $(($('sname').value.trim().length < 2) ? 'sname' : 'scls').focus(), 400);
   return false;
@@ -673,6 +681,22 @@ const EXIT = [
 ];
 makeQuiz('startBox', 'startMsg2', START, st.startQ, 'start', 'Starter Quiz', 'Now look at the two boxes below!');
 makeQuiz('exitBox', 'exitMsg', EXIT, st.exitQ, 'exit', 'Exit Ticket', 'Today you learnt how attributes give extra information to elements.');
+
+/* ---------- show who is saving on the Code Missions and Exit Ticket tabs ---------- */
+function syncIdLines(){
+  const n = $('sname').value.trim(), c = $('scls').value, sm = $('saveMsg');
+  const has = n.length >= 2 && c;
+  document.querySelectorAll('.idline').forEach(el => {
+    if (!has){ el.className = 'msg bad idline'; el.textContent = 'Type your name and class in the Warm-up tab first.'; }
+    else if (st.seq){ el.className = sm.className + ' idline'; el.textContent = sm.textContent; }
+    else { el.className = 'msg ok idline'; el.textContent = `Saving for ${n} (${c}).`; }
+  });
+  document.querySelectorAll('.goWarm').forEach(b => b.hidden = !!has);
+}
+new MutationObserver(syncIdLines).observe($('saveMsg'), {childList:true, characterData:true, subtree:true, attributes:true});
+['input','change'].forEach(ev => { $('sname').addEventListener(ev, syncIdLines); $('scls').addEventListener(ev, syncIdLines); });
+document.querySelectorAll('.goWarm').forEach(b => b.addEventListener('click', () => { showTab('warm'); $('sname').focus(); }));
+syncIdLines();
 </script>
 </body>
 </html>
