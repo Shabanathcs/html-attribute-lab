@@ -140,7 +140,7 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 .steps button:hover{border-color:var(--tomato);color:var(--tomato)}
 .steps button.done{background:var(--ok);border-color:var(--ok);color:#fff}
 .mission{scroll-margin-top:84px}
-.who{position:relative}
+.who{position:relative;margin-bottom:22px}
 .who .msg{flex:1;min-width:220px}
 .goals{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .goals li{display:flex;gap:10px;align-items:center;font-weight:700}
@@ -167,19 +167,26 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 
 <main class="wrap">
 
-<div id="who" class="card who" hidden>
+<div id="who" class="card who">
   <div class="idrow">
     <div class="field"><label for="sname">Your full name</label><input id="sname" maxlength="40" placeholder="Type your name" autocomplete="off"></div>
     <div class="field"><label for="scls">Class</label><select id="scls"><option value="">Select</option></select></div>
   </div>
   <div class="row jump">
-    <div class="msg info" id="saveMsg">Type your name and class first. Your points are saved after every mission, the exit ticket and Free Play.</div>
+    <div class="msg info" id="saveMsg">Type your name and class first. Your points are saved after the Starter Quiz, every mission, Free Play and the Exit Ticket.</div>
     <button class="btn ghost" id="retrySave" hidden>Try saving again</button>
   </div>
 </div>
 
 <!-- ============ 1 WARM-UP ============ -->
 <section class="panel" id="p-warm">
+  <div class="def">
+    <span class="eyebrow">Starter · recap of last lesson</span>
+    <h1 class="title">Starter Quiz</h1>
+    <p class="lead">Type your name and class above, then answer the 3 questions. You get 1 point for each question you answer correctly on the first try.</p>
+  </div>
+  <div id="startBox" class="grid2"></div>
+  <div class="msg" id="startMsg2"></div>
   <div class="def">
     <span class="eyebrow">Grade 6 · Building Web Pages using HTML5 and CSS3</span>
     <h1 class="title">Same tag, new look</h1>
@@ -326,7 +333,7 @@ document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('cl
 function showTab(p){
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.p === p)));
   ['warm','learn','code','exit'].forEach(k => $('p-' + k).hidden = k !== p);
-  $('who').hidden = !(p === 'code' || p === 'exit');
+  $('who').hidden = p === 'learn';
   window.scrollTo({top:0});
   try{ localStorage.setItem('attrlab-tab', p); }catch(e){}
 }
@@ -438,7 +445,7 @@ function need(s, tag, name){ return s[tag] ? '' : `I can't find ${name}. Did a t
 function hasStyle(el, tag){ return el.hasAttribute('style') ? '' : `Add the style attribute inside the <${tag}> start tag.`; }
 function colorIs(el, prop, want, msg){ return getComputedStyle(el).getPropertyValue(prop).trim() === want ? '' : msg; }
 
-const st = { exitQ:['','',''], sid:'', seq:0, name:'', cls:'', tries:MISSIONS.map(()=>0), pts:MISSIONS.map(()=>0), done:MISSIONS.map(()=>false), t0:0, seconds:0, exit:0, exitDone:0, free:0 };
+const st = { startQ:['','',''], start:0, exitQ:['','',''], sid:'', seq:0, name:'', cls:'', tries:MISSIONS.map(()=>0), pts:MISSIONS.map(()=>0), done:MISSIONS.map(()=>false), t0:0, seconds:0, exit:0, exitDone:0, free:0 };
 const MAX = MISSIONS.length * 100;
 CLASSES.forEach(c => { const o = document.createElement('option'); o.value = o.textContent = c; $('scls').appendChild(o); });
 
@@ -593,10 +600,11 @@ function save(what){
   st.seq++;
   const data = { sid:st.sid, seq:st.seq, name:st.name, cls:st.cls, m1:st.pts[0], m2:st.pts[1], m3:st.pts[2], total,
     done:doneN, badge: badgeFor(total),
+    s1: st.startQ[0], s2: st.startQ[1], s3: st.startQ[2], start: st.startQ.some(v => v !== '') ? st.start : '',
     q1: st.exitQ[0], q2: st.exitQ[1], q3: st.exitQ[2], exit: st.exitQ.some(v => v !== '') ? st.exit : '', free: st.free || '', seconds:st.seconds };
   msg.className='msg info'; msg.textContent = `Saving ${lastWhat}...`; $('retrySave').hidden = true;
   fetch(SCORE_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(data)})
-    .then(() => { msg.className='msg ok'; msg.textContent = `Saved for ${st.name}: Missions ${total}/${MAX}` + (st.exitQ.some(v => v !== '') ? ` · Exit Ticket ${st.exit}/3` : '') + (st.free ? ` · Free Play ${st.free}/50` : '') + '.'; })
+    .then(() => { msg.className='msg ok'; msg.textContent = `Saved for ${st.name}: ` + (st.startQ.some(v => v !== '') ? `Starter ${st.start}/3 · ` : '') + `Missions ${total}/${MAX}` + (st.exitQ.some(v => v !== '') ? ` · Exit Ticket ${st.exit}/3` : '') + (st.free ? ` · Free Play ${st.free}/50` : '') + '.'; })
     .catch(() => { msg.className='msg bad'; msg.textContent='Could not save. Check the internet and press Try saving again.'; $('retrySave').hidden = false; });
 }
 $('retrySave').onclick = () => save();
@@ -634,31 +642,37 @@ $('freeSubmit').onclick = () => {
   if (improved) save('Free Play');
 };
 
-/* ---------- Exit ticket ---------- */
+/* ---------- Quizzes: Starter (recap) and Exit Ticket ---------- */
+function makeQuiz(box, doneMsg, items, marks, key, label, finalText){
+  const pre = key + 'q';
+  $(box).innerHTML = items.map((e,i) => `<div class="card exitq"><span class="eyebrow">Question ${i+1}</span><h3>${e.html ? e.q : esc(e.q)}</h3><div class="opts">${e.o.map((o,j)=>`<button class="opt" data-q="${i}" data-j="${j}"><code>${esc(o)}</code></button>`).join('')}</div><div class="msg" id="${pre}${i}"></div></div>`).join('');
+  const done = new Set(), tried = new Set();
+  $(box).addEventListener('click', ev => {
+    const b = ev.target.closest('.opt'); if (!b) return;
+    const i = +b.dataset.q, j = +b.dataset.j, E = items[i], m = $(pre + i);
+    if (done.has(i)) return;
+    if (!needId(t => { m.className='msg bad'; m.textContent = t; })) return;
+    const first = !tried.has(i); tried.add(i);
+    if (j === E.a){
+      b.classList.add('right'); done.add(i); marks[i] = first ? 1 : 0; if (first) st[key]++;
+      m.className='msg ok'; m.textContent = (first ? 'Correct! +1 point. ' : 'Correct! ') + E.why;
+      if (done.size === items.length){ $(doneMsg).className='msg ok'; $(doneMsg).textContent = `${label} done: ${st[key]} / ${items.length} points. ${finalText}`; save(label); }
+      else save(`${label} Q${i+1}`);
+    } else { b.classList.add('wrong'); m.className='msg bad'; m.textContent='Not quite. Try again (no point for this question now).'; }
+  });
+}
+const START = [
+  {q:'What does HTML stand for?', o:['HyperText Markup Language','High Text Machine Language','Hyper Tool Multi Language'], a:0, why:'HTML is the language used to build web pages.'},
+  {q:'Which tag makes the main heading of a page?', o:['<p>','<h1>','<br>'], a:1, why:'<h1> is the biggest, most important heading.'},
+  {q:'Which of these is an empty tag (it has no end tag)?', o:['<p>','<title>','<br>'], a:2, why:'<br> breaks the line and has no closing tag.'}
+];
 const EXIT = [
   {q:'Where do we write an attribute?', o:['Inside the end tag','Inside the start tag','After the end tag'], a:1, why:'Attributes always go inside the start tag.'},
   {q:'Which code makes the text Tomato?', o:['<p style="color=Tomato">','<p style="colour:Tomato;">','<p style="color:Tomato;">'], a:2, why:'Use a colon and the spelling color.'},
   {q:'In <code>&lt;p style="background-color:red;"&gt;</code>, what is <code>background-color</code>?', o:['The element name','The property','The content'], a:1, why:'background-color is the CSS property; red is its value.', html:true}
 ];
-$('exitBox').innerHTML = EXIT.map((e,i) => `<div class="card exitq"><span class="eyebrow">Question ${i+1}</span><h3>${e.html ? e.q : esc(e.q)}</h3><div class="opts">${e.o.map((o,j)=>`<button class="opt" data-q="${i}" data-j="${j}"><code>${esc(o)}</code></button>`).join('')}</div><div class="msg" id="ex${i}"></div></div>`).join('');
-const exitDone = new Set(), exitTried = new Set();
-$('exitBox').addEventListener('click', ev => {
-  const b = ev.target.closest('.opt'); if (!b) return;
-  const i = +b.dataset.q, j = +b.dataset.j, E = EXIT[i];
-  if (exitDone.has(i)) return;
-  if (!needId(m => { $('ex'+i).className='msg bad'; $('ex'+i).textContent = m; })) return;
-  const first = !exitTried.has(i); exitTried.add(i);
-  if (j === E.a){
-    b.classList.add('right'); exitDone.add(i); st.exitQ[i] = first ? 1 : 0; if (first) st.exit++;
-    $('ex'+i).className='msg ok'; $('ex'+i).textContent = (first ? 'Correct! +1 point. ' : 'Correct! ') + E.why;
-    if (exitDone.size < EXIT.length) save('Exit Ticket Q' + (i+1));
-  } else { b.classList.add('wrong'); $('ex'+i).className='msg bad'; $('ex'+i).textContent='Not quite. Try again (no point for this question now).'; }
-  if (exitDone.size === EXIT.length){
-    st.exitDone = 1;
-    $('exitMsg').className='msg ok'; $('exitMsg').textContent=`Exit ticket done: ${st.exit} / 3 points. Today you learnt how attributes give extra information to elements.`;
-    save('Exit Ticket');
-  }
-});
+makeQuiz('startBox', 'startMsg2', START, st.startQ, 'start', 'Starter Quiz', 'Now look at the two boxes below!');
+makeQuiz('exitBox', 'exitMsg', EXIT, st.exitQ, 'exit', 'Exit Ticket', 'Today you learnt how attributes give extra information to elements.');
 </script>
 </body>
 </html>
