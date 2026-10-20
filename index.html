@@ -445,9 +445,9 @@ const MISSIONS = [
   },
   {
     title:'Red Alert Box',
-    q:'Change the background colour of <q>Fire drill at 10:00 am</q> to red.',
-    code:'<p>Fire drill at 10:00 am</p>',
-    goal:'<p style="background-color:red;">Fire drill at 10:00 am</p>',
+    q:'Change the background colour of <q>Fire drill at 10 am. Walk do not run!</q> to red.',
+    code:'<h2>Notice</h2>\n<p>Fire drill at 10 am. Walk do not run!</p>',
+    goal:'<h2>Notice</h2>\n<p style="background-color:red;">Fire drill at 10 am. Walk do not run!</p>',
     hint:{say:'Add the style attribute inside the start tag:', code:'<p style="background-color:red;">'},
     check: s => need(s,'p','the <p> paragraph') || hasStyle(s.p,'p') || colorIs(s.p,'background-color',RED,'The background is not red yet. Use style="background-color:red;"')
   },
