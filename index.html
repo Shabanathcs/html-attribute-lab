@@ -141,6 +141,7 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
 .steps button.done{background:var(--ok);border-color:var(--ok);color:#fff}
 .mission{scroll-margin-top:84px}
 .who{position:relative;margin-bottom:22px}
+.linelabel{font:800 .8rem var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:-6px}
 .idbar .msg{flex:1;min-width:220px}
 .taskpill{display:inline-flex;align-items:baseline;gap:8px;align-self:flex-start;background:var(--ink);color:#fff;font:800 1.35rem var(--display);padding:6px 18px;border-radius:999px;letter-spacing:.02em}
 .taskpill small{font-size:.75em;opacity:.75;font-weight:700}
@@ -236,7 +237,10 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
   </div>
   <div class="card">
     <div class="legend" id="anaChips"></div>
+    <span class="linelabel">Tag 1 · changes the text colour</span>
     <div class="codeline" id="anaLine"></div>
+    <span class="linelabel">Tag 2 · changes the background colour</span>
+    <div class="codeline" id="anaLine2"></div>
     <p id="anaText" class="lead" style="color:var(--ink)">An <b>element</b> is the start tag, the content and the end tag together.</p>
   </div>
 
@@ -377,26 +381,37 @@ const TOKENS = [
   {t:'Hello UAE!', c:'txt', part:'content'},
   {t:'</h1>', c:'tag', part:'end'}
 ];
-function drawLine(el, pickable){
-  el.innerHTML = TOKENS.map((k,i) => `<span class="tok ${k.c}${pickable && k.t.trim() && k.t!=='<' && k.t!=='>' && k.t!=='=' ? ' pick' : ''}" data-i="${i}" data-part="${k.part}">${esc(k.t).replace(/ /g,'&nbsp;')}</span>`).join('');
+const TOKENS2 = [
+  {t:'<', c:'tag', part:'start'},
+  {t:'p', c:'tag', part:'start name'},
+  {t:' ', c:'tag', part:'start'},
+  {t:'style', c:'attr', part:'start attr aname'},
+  {t:'=', c:'attr', part:'start attr'},
+  {t:'"background-color:red;"', c:'val', part:'start attr avalue'},
+  {t:'>', c:'tag', part:'start'},
+  {t:'Fire drill!', c:'txt', part:'content'},
+  {t:'</p>', c:'tag', part:'end'}
+];
+function drawLine(el, pickable, toks = TOKENS){
+  el.innerHTML = toks.map((k,i) => `<span class="tok ${k.c}${pickable && k.t.trim() && k.t!=='<' && k.t!=='>' && k.t!=='=' ? ' pick' : ''}" data-i="${i}" data-part="${k.part}">${esc(k.t).replace(/ /g,'&nbsp;')}</span>`).join('');
 }
 
 /* ---------- Anatomy ---------- */
 const ANA = [
   {k:'element', label:'Element', parts:['start','content','end'], text:'An <b>element</b> is the start tag, the content and the end tag together.'},
   {k:'start', label:'Start tag', parts:['start'], text:'The <b>start tag</b> opens the element. Attributes always live here.'},
-  {k:'name', label:'Element name', parts:['name'], text:'<b>h1</b> is the element name. It decides what the element is.'},
+  {k:'name', label:'Element name', parts:['name'], text:'<b>h1</b> and <b>p</b> are element names. They decide what the element is: a heading or a paragraph.'},
   {k:'aname', label:'Attribute name', parts:['aname'], text:'<b>style</b> is the attribute name. It gives extra information about the element.'},
-  {k:'avalue', label:'Attribute value', parts:['avalue'], text:'<b>"color:Tomato;"</b> is the attribute value, always inside double quotes.'},
-  {k:'content', label:'Content', parts:['content'], text:'<b>Hello UAE!</b> is the content. This is what you see on the web page.'},
-  {k:'end', label:'End tag', parts:['end'], text:'<b>&lt;/h1&gt;</b> is the end tag. It closes the element and has a slash.'}
+  {k:'avalue', label:'Attribute value', parts:['avalue'], text:'<b>"color:Tomato;"</b> and <b>"background-color:red;"</b> are attribute values, always inside double quotes.'},
+  {k:'content', label:'Content', parts:['content'], text:'<b>Hello UAE!</b> and <b>Fire drill!</b> are the content. This is what you see on the web page.'},
+  {k:'end', label:'End tag', parts:['end'], text:'<b>&lt;/h1&gt;</b> and <b>&lt;/p&gt;</b> are end tags. They close the element and have a slash.'}
 ];
-drawLine($('anaLine'), false);
+drawLine($('anaLine'), false); drawLine($('anaLine2'), false, TOKENS2);
 $('anaChips').innerHTML = ANA.map((a,i) => `<button class="chip" aria-pressed="${i===0}" data-k="${a.k}">${a.label}</button>`).join('');
 function ana(k){
   const a = ANA.find(x => x.k === k);
   $('anaChips').querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.k === k)));
-  $('anaLine').querySelectorAll('.tok').forEach(t => t.classList.toggle('hit', t.dataset.part.split(' ').some(p => a.parts.includes(p))));
+  document.querySelectorAll('#anaLine .tok, #anaLine2 .tok').forEach(t => t.classList.toggle('hit', t.dataset.part.split(' ').some(p => a.parts.includes(p))));
   $('anaText').innerHTML = a.text;
 }
 $('anaChips').addEventListener('click', e => { const c = e.target.closest('.chip'); if (c) ana(c.dataset.k); });
