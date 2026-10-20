@@ -268,7 +268,7 @@ table.marks td:last-child,table.marks th:last-child{text-align:right}
   <div id="startCard" class="card">
     <span class="eyebrow">Code Missions</span>
     <h1 class="title">Be a web stylist</h1>
-    <p class="lead">Write real HTML code in each editor. The preview changes as you type. Press <b>Check my code</b> when you are ready. Each mission gives 100 points on the first try and 25 points less for every wrong check.</p>
+    <p class="lead">Write real HTML code in each editor. The preview changes as you type. Press <b>Check my code</b> when you are ready. Each mission gives 100 points when you complete it. Mistakes do not cut your points, so keep fixing your code until it works!</p>
     <div class="row jump">
       <div class="steps" id="mSteps"></div>
       <div class="scorebox" id="mScore">0 / 300 pts</div>
@@ -580,19 +580,18 @@ $('missionList').addEventListener('click', e => {
   const code = $('ed'+i).value;
   const problem = M.check(snapshot(i)) ? (lint(code) || M.check(snapshot(i))) : (lint(code) || '');
   if (!problem){
-    st.done[i] = true; st.pts[i] = Math.max(25, 100 - 25 * st.tries[i]);
-    say(i, 'ok', `Mission complete! +${st.pts[i]} points.` + (st.tries[i] === 0 ? ' Perfect first try!' : ''));
+    st.done[i] = true; st.pts[i] = 100;
+    say(i, 'ok', 'Mission complete! +100 points.');
     b.disabled = true; $('ed'+i).readOnly = true; $('ms'+i).textContent = st.pts[i] + ' pts earned';
     $('m'+i).classList.add('complete'); drawSteps();
     if (st.done.every(Boolean)) finish(); else save('Mission ' + (i+1));
   } else {
     st.tries[i]++;
-    const next = Math.max(25, 100 - 25 * st.tries[i]);
-    say(i, 'bad', problem + `  (Next correct check: ${next} pts)`); $('ms'+i).textContent = next + ' pts';
+    say(i, 'bad', problem + '  Fix it and check again.');
   }
 });
 
-function badgeFor(total){ return total >= 275 ? 'Gold' : total >= 200 ? 'Silver' : 'Bronze'; }
+function badgeFor(total){ const n = Math.round(total / 100); return n >= 3 ? 'Gold' : n === 2 ? 'Silver' : n === 1 ? 'Bronze' : 'None'; }
 const missionsTotal = () => st.pts.reduce((a,b)=>a+b,0);
 function finish(){
   const total = missionsTotal(), badge = badgeFor(total), secs = Math.round((Date.now() - st.t0) / 1000);
@@ -613,7 +612,7 @@ function save(what){
   if (!SCORE_URL){ msg.className='msg info'; msg.textContent = `${lastWhat} done. Show this screen to your teacher.`; return; }
   st.seq++;
   const data = { sid:st.sid, seq:st.seq, name:st.name, cls:st.cls, m1:st.pts[0], m2:st.pts[1], m3:st.pts[2], total,
-    done:doneN, badge: doneN === MISSIONS.length ? badgeFor(total) : `Incomplete (${doneN}/${MISSIONS.length})`,
+    done:doneN, badge: badgeFor(total),
     exit: st.exitDone ? st.exit : '', free: st.free || '', seconds:st.seconds };
   msg.className='msg info'; msg.textContent = `Saving ${lastWhat}...`; $('retrySave').hidden = true;
   fetch(SCORE_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(data)})
